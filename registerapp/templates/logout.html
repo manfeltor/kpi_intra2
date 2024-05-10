@@ -1,0 +1,26 @@
+{% extends 'index.html' %}
+{% block navbar_buttons %}
+
+    <li><a class="nav-link scrollto active" href="{% url 'home' %}">Home</a></li>
+    <!-- <li><a class="nav-link scrollto" href="#about">Acerca</a></li> -->
+    <!-- <li><a class="nav-link scrollto" href="#services">Servicios</a></li> -->
+    <li><a class="nav-link scrollto" href="#footer">Contacto</a></li>
+
+{% endblock navbar_buttons %}
+
+    {% block hero_txt %}
+
+    <h1>NOS VEMOS LA PROXIMA<span>.</span></h1>
+    <h2>Seras redireccionado a la pagina de inicio</h2>
+
+    {% endblock hero_txt %}
+    {% block hero_panel %}
+    {% endblock hero_panel %}
+
+{% block main_body %}
+<script>
+    setTimeout(function() {
+            window.location.href = "{% url 'home' %}";
+    }, 2500); // 5000 milliseconds = 5 seconds
+</script>
+{% endblock main_body %}

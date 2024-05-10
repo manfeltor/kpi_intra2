@@ -1,0 +1,64 @@
+{% extends 'index.html' %}
+{% block navbar_buttons %}
+
+    <li><a class="nav-link scrollto active" href="{% url 'home' %}">Home</a></li>
+    <!-- <li><a class="nav-link scrollto" href="#about">Acerca</a></li> -->
+    <!-- <li><a class="nav-link scrollto" href="#services">Servicios</a></li> -->
+    <li><a class="nav-link scrollto" href="#footer">Contacto</a></li>
+
+{% endblock navbar_buttons %}
+
+{% block hero_txt %}
+
+    <h1>INTRALOG METRICS<span>.</span></h1>
+    <h2>KPI de entregas gerencia</h2>
+
+{% endblock hero_txt %}
+
+{% block main_body %}
+
+{% if request.method == 'GET' %}
+    <form method="post">
+        {% csrf_token %}
+        {{ dates_form.as_p }}
+        {{ delivery_form.as_p }}
+        <button type="submit">Apply</button>
+    </form>
+
+{% elif request.method == 'POST' %}   
+
+    <h2>Promedio por provincias</h2>
+    <div class="table-styled table-container" data-aos="fade-right" data-aos-delay="100">
+        {{ mean_table | safe }}
+    </div>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <h1>Interactive Bar Plot</h1>
+        <div id="plot1"></div>
+
+        <script>
+        // Load the Plotly JSON data
+        var graphJson = JSON.parse('{{ mean_graph|escapejs }}');
+
+        // Render the Plotly chart
+        Plotly.newPlot('plot1', graphJson.data, graphJson.layout);
+        </script>
+
+    <h2>Moda por provincias</h2>
+    <div class="table-styled table-container" data-aos="fade-right" data-aos-delay="100">
+        {{ mode_table | safe }}
+    </div>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <h1>Interactive Bar Plot</h1>
+        <div id="plot2"></div>
+
+        <script>
+        // Load the Plotly JSON data
+        var graphJson = JSON.parse('{{ mode_graph|escapejs }}');
+
+        // Render the Plotly chart
+        Plotly.newPlot('plot2', graphJson.data, graphJson.layout);
+        </script>
+
+{% endif %}
+
+{% endblock main_body %}

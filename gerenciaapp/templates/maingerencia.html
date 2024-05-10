@@ -1,0 +1,53 @@
+{% extends 'index.html' %}
+{% block navbar_buttons %}
+
+    <li><a class="nav-link scrollto active" href="{% url 'home' %}">Home</a></li>
+    <!-- <li><a class="nav-link scrollto" href="#about">Acerca</a></li> -->
+    <!-- <li><a class="nav-link scrollto" href="#services">Servicios</a></li> -->
+    <li><a class="nav-link scrollto" href="#footer">Contacto</a></li>
+
+{% endblock navbar_buttons %}
+{% block hero_txt %}
+
+    <h1>INTRALOG METRICS<span>.</span></h1>
+    <h2>Modulo de informes de gerencia</h2>
+
+{% endblock hero_txt %}
+
+{% block hero_panel %}
+{% if user.is_authenticated %}
+
+      <div class="row gy-4 mt-5 justify-content-center" data-aos="zoom-in" data-aos-delay="250">
+        <div class="col-xl-2 col-md-4">
+          <div class="icon-box">
+            <i class="ri-store-line"></i>
+            <h3><a href="#">AMBA</a></h3>
+          </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+          <div class="icon-box">
+            <i class="ri-bar-chart-box-line"></i>
+            <h3><a href="#">Patrones</a></h3>
+          </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+          <div class="icon-box">
+            <i class="ri-calendar-todo-line"></i>
+            <h3><a href="#">fechas relevantes</a></h3>
+          </div>
+        </div>
+        <!-- <div class="col-xl-2 col-md-4">
+          <div class="icon-box">
+            <i class="ri-paint-brush-line"></i>
+            <h3><a href="">otro kpi</a></h3>
+          </div>
+        </div> -->
+        <div class="col-xl-2 col-md-4">
+          <div class="icon-box">
+            <i class="ri-database-2-line"></i>
+            <h3><a href="#">WH</a></h3>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+{% endblock hero_panel %}

@@ -1,0 +1,48 @@
+{% extends 'index.html' %}
+{% block navbar_buttons %}
+
+    <li><a class="nav-link scrollto active" href="{% url 'home' %}">Home</a></li>
+    <!-- <li><a class="nav-link scrollto" href="#about">Acerca</a></li> -->
+    <!-- <li><a class="nav-link scrollto" href="#services">Servicios</a></li> -->
+    <li><a class="nav-link scrollto" href="#footer">Contacto</a></li>
+
+{% endblock navbar_buttons %}
+
+<div>
+    {% block hero_txt %}
+    {% if msg != "1" %}
+
+        <h1>La autenticacion fallo<span>.</span></h1>
+        <h2>parece que los datos son incorrectos o no coinciden con ningun usuario en las bases. seras redireccionado de nuevo al formulario de loguin en instantes</h2>
+
+    {% else %}
+
+        <h1>Bienvenido {{usr}}!!!<span>.</span></h1>
+        <h2>seras redireccionado a la pagina de inicio en instantes</h2>
+        
+    {% endif %}
+    
+</div>
+
+    {% if msg == "1" %}
+
+    <script>
+        setTimeout(function() {
+                window.location.href = "{% url 'home' %}";
+        }, 2500); // 5000 milliseconds = 5 seconds
+    </script>
+    
+    {% else %}
+
+    <script>
+        setTimeout(function() {
+                window.location.href = "{% url 'login' %}";
+        }, 4500); // 5000 milliseconds = 5 seconds
+    </script>
+
+    {% endif %}
+    {% endblock hero_txt %}
+    {% block hero_panel %}
+    {% endblock hero_panel %}
+{% block main_body %}
+{% endblock main_body %}

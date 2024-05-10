@@ -1,0 +1,17 @@
+{% extends 'index.html' %}
+
+{% block navbar_buttons %}
+
+    <li><a class="nav-link scrollto active" href="{% url 'home' %}">Home</a></li>
+    <!-- <li><a class="nav-link scrollto" href="#about">Acerca</a></li> -->
+    <!-- <li><a class="nav-link scrollto" href="#services">Servicios</a></li> -->
+    <li><a class="nav-link scrollto" href="#footer">Contacto</a></li>
+
+{% endblock navbar_buttons %}
+
+{% block hero_txt %}
+
+    <h1>INTRALOG METRICS<span>.</span></h1>
+    <h2>KPI de entregas y fallidos</h2>
+
+{% endblock hero_txt %}

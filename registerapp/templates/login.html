@@ -1,0 +1,31 @@
+{% extends 'index.html' %}
+
+{% block navbar_buttons %}
+
+    <li><a class="nav-link scrollto active" href="{% url 'home' %}">Home</a></li>
+    <!-- <li><a class="nav-link scrollto" href="#about">Acerca</a></li> -->
+    <!-- <li><a class="nav-link scrollto" href="#services">Servicios</a></li> -->
+    <li><a class="nav-link scrollto" href="#footer">Contacto</a></li>
+
+{% endblock navbar_buttons %}
+
+{% block hero_txt %}
+
+    <h1>INTRALOG METRICS<span>.</span></h1>
+    <h2>Logueate para continuar</h2>
+
+        <form action="{% url 'login' %}" method="post" class="get-started-btn scrollto">
+            {% csrf_token %}
+
+            {{formulario1.as_p}}
+
+            <button class="get-started-btn scrollto" style = "background-color: #FFD85D;"> Log In </button>
+        </form>
+
+{% endblock hero_txt %}
+
+{% block hero_panel %}
+{% endblock hero_panel %}
+
+{% block main_body %}
+{% endblock main_body %}
