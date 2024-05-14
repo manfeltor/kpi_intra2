@@ -107,3 +107,10 @@ class srVisit(models.Model):
 
     def __str__(self):
         return f"Visit on {self.date}"
+    
+class TrackingEventCA(models.Model):
+    tracking_number = models.CharField(max_length=100)  # Not a ForeignKey, just a reference
+    data = models.JSONField()  # Stores event details as JSON
+
+    def __str__(self):
+        return f"Tracking Event for {self.tracking_number}"
