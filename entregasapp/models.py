@@ -17,7 +17,7 @@ class cpPais(models.Model):
     CPA = models.CharField(max_length=100)
 
 
-class  bdoms(models.Model):
+class bdoms(models.Model):
 
     pedido = models.CharField(max_length=50, null=True)
     flujo = models.CharField(max_length=2, null=True)
@@ -114,3 +114,10 @@ class TrackingEventCA(models.Model):
 
     def __str__(self):
         return f"Tracking Event for {self.tracking_number}"
+    
+class TaskProgress(models.Model):
+    task_name = models.CharField(max_length=255)
+    last_completed_batch = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.task_name} last completed at batch {self.last_completed_batch}"
