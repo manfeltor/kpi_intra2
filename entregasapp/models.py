@@ -109,15 +109,23 @@ class srVisit(models.Model):
         return f"Visit on {self.date}"
     
 class TrackingEventCA(models.Model):
-    tracking_number = models.CharField(max_length=100)  # Not a ForeignKey, just a reference
-    data = models.JSONField()  # Stores event details as JSON
+    id = models.BigAutoField(primary_key=True)
+    tracking_number = models.CharField(max_length=100)
+    quantity = models.IntegerField()
+    country_id = models.CharField(max_length=2)
+    service_type = models.CharField(max_length=2)
 
     def __str__(self):
-        return f"Tracking Event for {self.tracking_number}"
-    
-class TaskProgress(models.Model):
-    task_name = models.CharField(max_length=255)
-    last_completed_batch = models.IntegerField(default=0)
+        return f"Tracking Event {self.tracking_number} in {self.country_id}"
+
+class EventDetail(models.Model):
+    tracking_event = models.ForeignKey(TrackingEventCA, related_name='events', on_delete=models.CASCADE)
+    facility_code = models.CharField(max_length=50)
+    status_id = models.CharField(max_length=50)
+    status = models.CharField(max_length=100)
+    date = models.DateTimeField()
+    sign = models.CharField(max_length=100, blank=True, null=True)
+    facility = models.CharField(max_length=100)
 
     def __str__(self):
-        return f"{self.task_name} last completed at batch {self.last_completed_batch}"
+        return f"Event at {self.facility} with status {self.status}"
