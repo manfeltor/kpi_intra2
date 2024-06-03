@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
     API_URL = "https://api.correoargentino.com.ar/paqar/v1/tracking"
     HEADERS = {
-        "authorization": "x",
+        "authorization": "Apikey eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxOTEyNSIsIkNMQUlNX1RPS0VOIjoiUEVSTUlTU0lPTl9ERUZBVUxUIiwiaWF0IjoxNjkzMzMzNzM4LCJpc3MiOiJJU1NVRVIifQ.H2G4xWGgpESFMGO06YNYy_0l3tSw3ylmphZW4_y6ifU",
         "agreement": "19125",
     }
 
@@ -46,7 +46,10 @@ class Command(BaseCommand):
 
             for attempt in range(retries):
                 try:
-                    response = requests.get(self.API_URL, headers=self.HEADERS, params={"trackingNumbers": batch})
+                    response = requests.get(self.API_URL, headers=self.HEADERS, params={
+            "extClient": "",
+            "trackingNumbers": batch
+        })
                     response.raise_for_status()
                     data = response.json()
                     
