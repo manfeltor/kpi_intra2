@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'registerapp',
     'entregasapp',
     'gerenciaapp',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -139,3 +140,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'templates')
 
 # MEDIA_URL = '/assets/'
 MEDIA_ROOT = BASE_DIR / "assets"
+
+REST_FRAMEWORK = {
+'DEFAULT_AUTHENTICATION_CLASSES': (
+    'rest_framework.authentication.SessionAuthentication',
+),
+}
