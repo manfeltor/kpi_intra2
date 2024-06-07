@@ -222,4 +222,3 @@ def importar_excel_tms(folder_path) -> pd.DataFrame:
     # bdfin = bdfin.rename(columns=lambda x: x.replace('.', 'x'))
     # print(type(bdfin))
     return bdfin
-

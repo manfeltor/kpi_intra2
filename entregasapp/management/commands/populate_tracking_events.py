@@ -4,8 +4,8 @@ import json
 import re
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from entregasapp.models import bdoms, TrackingEventCA
-from entregasapp.selializers import TrackingEventCASerializer
+from entregasapp.models import bdoms, TrackingEventCA, EventDetail
+from entregasapp.selializers import TrackingEventCASerializer, EventDetailSerializer
 
 class Command(BaseCommand):
     help = 'Populate TrackingEventCA and EventDetail models with data from an external API'
@@ -37,11 +37,13 @@ class Command(BaseCommand):
 
         # Process batches
         batch_size = 20
-        batch_delay = 2
+        batch_delay = 1
         error_delay = 4
         retries = 3
         successful_requests = 0
+        cached_data = []
         total_batches = (len(valid_tracking_numbers) + batch_size - 1) // batch_size
+        atomizer_trigger = 1
 
         for i in range(total_batches):
             batch = valid_tracking_numbers[i * batch_size:(i + 1) * batch_size]
@@ -59,12 +61,15 @@ class Command(BaseCommand):
                     response.raise_for_status()
                     data = response.json()
                     
-                    # Process the response data
-                    self.process_response_data(data)
-
+                    # Cache the response data
+                    cached_data.extend(data)
                     successful_requests += 1
-                    if successful_requests % 500 == 0:
+                    print(f"batch {successful_requests} ok")
+                    
+                    if successful_requests % atomizer_trigger == 0:
                         self.stdout.write(self.style.SUCCESS("Processed 500 successful requests."))
+                        self.save_cached_data(cached_data)
+                        cached_data = []  # Clear cache after saving
                     
                     time.sleep(batch_delay)
                     break  # Exit retry loop on success
@@ -75,23 +80,44 @@ class Command(BaseCommand):
                         self.stdout.write(self.style.ERROR(f"Failed to process batch {batch} after {retries} attempts."))
                         return
 
+        # Save any remaining cached data
+        if cached_data:
+            self.save_cached_data(cached_data)
+
     @transaction.atomic
-    def process_response_data(self, data):
-        for item in data:
-            if item.get('countryId') is None or item.get('serviceType') is None:
-                continue  # Skip items with missing required fields
-            
+    def save_cached_data(self, cached_data):
+        for item in cached_data:
+            print(item)
+            country_id = item.get('countryId')
+            service_type = item.get('serviceType')
+
+            # Check for None, null, or empty values and set default values
+            if not country_id:
+                country_id = 'AR'
+            if not service_type:
+                service_type = 'SD'
+
             tracking_event_data = {
                 'tracking_number': item.get('trackingNumber'),
                 'quantity': item.get('quantity'),
-                'country_id': item.get('countryId', 'AR'),  # Default to 'AR' if not provided
-                'service_type': item.get('serviceType', 'SD'),  # Default to 'SD' if not provided
+                'country_id': country_id,
+                'service_type': service_type,
                 'events': item.get('event', [])
             }
+            print(tracking_event_data)
 
             serializer = TrackingEventCASerializer(data=tracking_event_data)
             if serializer.is_valid():
-                serializer.save()
+                tracking_event = serializer.save()
+                # Process and save EventDetail
+                events_data = tracking_event_data['events']
+                for event_data in events_data:
+                    event_data['tracking_event'] = tracking_event.id
+                    event_serializer = EventDetailSerializer(data=event_data)
+                    if event_serializer.is_valid():
+                        event_serializer.save()
+                    else:
+                        self.stdout.write(self.style.ERROR(f"Invalid event data for {item.get('trackingNumber')}: {event_serializer.errors}"))
             else:
                 self.stdout.write(self.style.ERROR(f"Invalid data for {item.get('trackingNumber')}: {serializer.errors}"))
         
