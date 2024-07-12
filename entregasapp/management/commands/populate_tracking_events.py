@@ -4,7 +4,7 @@ import json
 import re
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from entregasapp.models import bdoms
+from entregasapp.models import bdoms, TrackingEventCA, ProcessingState
 from entregasapp.selializers import TrackingEventCASerializer
 
 class Command(BaseCommand):
@@ -18,6 +18,8 @@ class Command(BaseCommand):
     VALID_TRACKING_REGEX = re.compile(r'^19.{16}$')  # Adjust the length as needed
 
     def handle(self, *args, **kwargs):
+        last_processed_tracking = self.get_last_processed_tracking()
+        
         # Fetch tracking numbers from bdoms and filter with regex
         tracking_numbers = list(
             bdoms.objects.filter(trackingTransporte__isnull=False)
@@ -25,9 +27,15 @@ class Command(BaseCommand):
             .values_list('trackingTransporte', flat=True)
             .distinct()
         )
-        
+
+        # Find the index to resume from
+        if last_processed_tracking:
+            start_index = tracking_numbers.index(last_processed_tracking) + 1
+        else:
+            start_index = 0
+
         # Filter tracking numbers with regex
-        valid_tracking_numbers = [tn for tn in tracking_numbers if self.VALID_TRACKING_REGEX.match(tn)]
+        valid_tracking_numbers = [tn for tn in tracking_numbers[start_index:] if self.VALID_TRACKING_REGEX.match(tn)]
 
         if not valid_tracking_numbers:
             self.stdout.write(self.style.WARNING("No valid tracking numbers found in bdoms."))
@@ -35,13 +43,13 @@ class Command(BaseCommand):
 
         # Process batches
         batch_size = 20
-        batch_delay = 0.5
-        error_delay = 3
+        batch_delay = 1
+        error_delay = 4
         retries = 3
         successful_requests = 0
         cached_data = []
         total_batches = (len(valid_tracking_numbers) + batch_size - 1) // batch_size
-        atomizer_trigger = 200
+        atomizer_trigger = 10
 
         for i in range(total_batches):
             batch = valid_tracking_numbers[i * batch_size:(i + 1) * batch_size]
@@ -74,7 +82,10 @@ class Command(BaseCommand):
                         self.stdout.write(self.style.SUCCESS("Processed 500 successful requests."))
                         self.save_cached_data(cached_data)
                         cached_data = []  # Clear cache after saving
-                    
+
+                    # Update the last processed tracking number
+                    self.update_last_processed_tracking(batch[-1])
+
                     time.sleep(batch_delay)
                     break  # Exit retry loop on success
                 except requests.RequestException as e:
@@ -100,3 +111,14 @@ class Command(BaseCommand):
         # Clear self junk cache to avoid performance issues
         import gc
         gc.collect()
+
+    def get_last_processed_tracking(self):
+        try:
+            return ProcessingState.objects.get(key="last_processed_tracking").value
+        except ProcessingState.DoesNotExist:
+            return None
+
+    def update_last_processed_tracking(self, tracking_number):
+        state, created = ProcessingState.objects.get_or_create(key="last_processed_tracking")
+        state.value = tracking_number
+        state.save()
