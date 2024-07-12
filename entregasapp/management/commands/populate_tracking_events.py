@@ -4,15 +4,13 @@ import json
 import re
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from entregasapp.models import bdoms, TrackingEventCA, EventDetail
-from entregasapp.selializers import TrackingEventCASerializer, EventDetailSerializer
+from entregasapp.models import bdoms
+from entregasapp.selializers import TrackingEventCASerializer
 
 class Command(BaseCommand):
-    help = 'Populate TrackingEventCA and EventDetail models with data from an external API'
+    help = 'Populate TrackingEventCA model with data from an external API'
 
     API_URL = "https://api.correoargentino.com.ar/paqar/v1/tracking"
-    # API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxOTEyNSIsIkNMQUlNX1RPS0VOIjoiUEVSTUlTU0lOX0RFRkFVTFQiLCJpYXQiOjE2OTMzMzM3MzgsImlzcyI6IklTU1VFSVIifQ.H2G4xWGgpESFMGO06YNYy_0l3tSw3ylmphZW4_y6ifU"
-    # AGREEMENT = "19125"
     HEADERS = {
         "authorization": "Apikey eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxOTEyNSIsIkNMQUlNX1RPS0VOIjoiUEVSTUlTU0lPTl9ERUZBVUxUIiwiaWF0IjoxNjkzMzMzNzM4LCJpc3MiOiJJU1NVRVIifQ.H2G4xWGgpESFMGO06YNYy_0l3tSw3ylmphZW4_y6ifU",
         "agreement": "19125",
@@ -37,13 +35,13 @@ class Command(BaseCommand):
 
         # Process batches
         batch_size = 20
-        batch_delay = 1
-        error_delay = 4
+        batch_delay = 0.5
+        error_delay = 3
         retries = 3
         successful_requests = 0
         cached_data = []
         total_batches = (len(valid_tracking_numbers) + batch_size - 1) // batch_size
-        atomizer_trigger = 1
+        atomizer_trigger = 200
 
         for i in range(total_batches):
             batch = valid_tracking_numbers[i * batch_size:(i + 1) * batch_size]
@@ -62,7 +60,13 @@ class Command(BaseCommand):
                     data = response.json()
                     
                     # Cache the response data
-                    cached_data.extend(data)
+                    for item in data:
+                        tracking_event_data = {
+                            'tracking_number': item.get('trackingNumber'),
+                            'raw_data': json.dumps(item)  # Convert to JSON string
+                        }
+                        cached_data.append(tracking_event_data)
+                    
                     successful_requests += 1
                     print(f"batch {successful_requests} ok")
                     
@@ -87,39 +91,11 @@ class Command(BaseCommand):
     @transaction.atomic
     def save_cached_data(self, cached_data):
         for item in cached_data:
-            print(item)
-            country_id = item.get('countryId')
-            service_type = item.get('serviceType')
-
-            # Check for None, null, or empty values and set default values
-            if not country_id:
-                country_id = 'AR'
-            if not service_type:
-                service_type = 'SD'
-
-            tracking_event_data = {
-                'tracking_number': item.get('trackingNumber'),
-                'quantity': item.get('quantity'),
-                'country_id': country_id,
-                'service_type': service_type,
-                'events': item.get('event', [])
-            }
-            print(tracking_event_data)
-
-            serializer = TrackingEventCASerializer(data=tracking_event_data)
+            serializer = TrackingEventCASerializer(data=item)
             if serializer.is_valid():
-                tracking_event = serializer.save()
-                # Process and save EventDetail
-                events_data = tracking_event_data['events']
-                for event_data in events_data:
-                    event_data['tracking_event'] = tracking_event.id
-                    event_serializer = EventDetailSerializer(data=event_data)
-                    if event_serializer.is_valid():
-                        event_serializer.save()
-                    else:
-                        self.stdout.write(self.style.ERROR(f"Invalid event data for {item.get('trackingNumber')}: {event_serializer.errors}"))
+                serializer.save()
             else:
-                self.stdout.write(self.style.ERROR(f"Invalid data for {item.get('trackingNumber')}: {serializer.errors}"))
+                self.stdout.write(self.style.ERROR(f"Invalid data for {item['tracking_number']}: {serializer.errors}"))
         
         # Clear self junk cache to avoid performance issues
         import gc

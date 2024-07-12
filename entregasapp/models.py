@@ -1,4 +1,5 @@
 from django.db import models
+import jsonfield
 
 # Create your models here.
 
@@ -41,15 +42,13 @@ class bdoms(models.Model):
     def __str__(self):
         return f"Order {self.pedido} Piece {self.lpn}"
 
+
 class TrackingEventCA(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    tracking_number = models.CharField(max_length=100, unique=True)
-    quantity = models.IntegerField(blank=True, null=True)
-    country_id = models.CharField(max_length=2, default="AR")
-    service_type = models.CharField(max_length=2)
+    tracking_number = models.CharField(max_length=255, unique=True)
+    raw_data = jsonfield.JSONField()  # Add this field to store the raw event data
 
     def __str__(self):
-        return f"Tracking Event {self.tracking_number} in {self.country_id}"
+        return self.tracking_number
 
 class EventDetail(models.Model):
     tracking_event = models.ForeignKey(TrackingEventCA, related_name='events', on_delete=models.CASCADE)
